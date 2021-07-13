@@ -18,17 +18,19 @@ struct ContentView: View {
         Example(index: 1, showDummyView: false),
         Example(index: 2, showDummyView: false),
         Example(index: 3, showDummyView: false),
-        Example(index: 4, showDummyView: true)
+        Example(index: 4, showDummyView: true),
     ]
 
     var body: some View {
         TabView(selection: $selection) {
             ForEach(testArray, id: \.self) { example in
-                if example.showDummyView {
-                    DummyView(index: example.index)
-                } else {
-                    ChildView(index: example.index)
+                Group {
+                    if example.showDummyView {
+                        DummyView(index: example.index)
+                    } else {
+                        ChildView(index: example.index)
 
+                    }
                 }
             }
         }
