@@ -12,49 +12,75 @@ struct Example: Hashable {
     var showDummyView: Bool
 }
 
+class Store: ObservableObject {
+    @Published var selected = 0
+}
+
 struct ContentView: View {
-    @State private var selection = 0
+    @StateObject var store = Store()
+
     private var testArray = [
         Example(index: 1, showDummyView: false),
         Example(index: 2, showDummyView: false),
         Example(index: 3, showDummyView: false),
-        Example(index: 4, showDummyView: true)
+        Example(index: 4, showDummyView: true),
     ]
 
     var body: some View {
-        TabView(selection: $selection) {
-            ForEach(testArray, id: \.self) { example in
-                if example.showDummyView {
-                    DummyView(index: example.index)
-                } else {
-                    ChildView(index: example.index)
-
-                }
+        TabView(selection: $store.selected) {
+            ForEach(testArray, id: \.index) { example in
+                IntermediateView(example: example, store: store)
+                    .tag(example.index)
             }
         }
         .tabViewStyle(PageTabViewStyle())
     }
 }
 
-struct ChildView: View {
-    var index: Int
+struct IntermediateView: View {
+    @ObservedObject var store: Store
+    var example: Example
+    
+    init(example: Example, store: Store) {
+        self.store = store
+        self.example = example
+    }
     
     var body: some View {
-        Text("Element \(index)")
-        .onAppear {
-            print("Normal view appeared")
+        if example.showDummyView {
+            DummyView(store: store, index: example.index)
+        } else {
+            ChildView(store: store, index: example.index)
         }
     }
 }
 
+struct ChildView: View {
+    @ObservedObject var store: Store
+    
+    var index: Int
+    
+    var body: some View {
+        Text("Element \(index)")
+            .onChange(of: store.selected) { newIsSelected in
+                if store.selected == index {
+                    print("ChildView appeared")
+                }
+            }
+    }
+}
+
 struct DummyView: View {
+    @ObservedObject var store: Store
+    
     var index: Int
     
     var body: some View {
         Text("This is a dummy view on index \(index)")
-            .onAppear {
-                print("Dummy view appeared")
-                print("Break")
+            .onChange(of: store.selected) { newIsSelected in
+                if store.selected == index {
+                    print("DummyView appeared")
+                }
             }
     }
 }
